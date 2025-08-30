@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>行星毁灭者 - 赛博朋克</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    color: #0affea;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 5px #0affea;
+  }
+  
+  #gameContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* 增强背景效果 */
+    background: 
+      radial-gradient(ellipse at center, rgba(0, 20, 40, 0.8) 0%, rgba(0, 0, 0, 1) 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 100, 150, 0.1) 2px, rgba(0, 100, 150, 0.1) 4px);
+  }
+  
+  #gameCanvas {
+    display: block;
+  }
+  
+  #ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    font-size: 24px;
+    color: #ff00ff;
+    text-shadow: 0 0 10px #ff00ff;
+  }
+  
+  #lives {
+    color: #ff00ff;
+    font-weight: bold;
+    letter-spacing: 5px;
+  }
+  
+  #instructions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 20;
+    background: rgba(10, 5, 30, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px solid #0affea;
+    box-shadow: 0 0 20px rgba(10, 255, 234, 0.7);
+    max-width: 500px;
+    width: 80%;
+    backdrop-filter: blur(5px);
+    /* 添加霓虹边框效果 */
+    outline: 1px solid #0affea;
+    outline-offset: 5px;
+  }
+  
+  #instructions h2 {
+    color: #ff00ff;
+    margin-top: 0;
+    text-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+    font-size: 32px;
+    letter-spacing: 2px;
+  }
+  
+  #instructions p {
+    line-height: 1.6;
+    margin: 10px 0;
+    color: #0affea;
+  }
+  
+  #instructions button {
+    margin-top: 20px;
+    padding: 12px 30px;
+    font-size: 18px;
+    background: linear-gradient(45deg, #ff00ff, #0affea);
+    color: #000;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(10, 255, 234, 0.7);
+    font-family: 'Courier New', monospace;
+    /* 添加脉冲动画 */
+    animation: pulse 2s infinite;
+  }
+  
+  #instructions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(255, 0, 255, 0.9);
+    background: linear-gradient(45deg, #0affea, #ff00ff);
+  }
+  
+  #difficulty {
+    margin-top: 20px;
+  }
+  
+  #difficulty button {
+    margin: 5px;
+    padding: 8px 15px;
+    font-size: 16px;
+    background: rgba(10, 255, 234, 0.2);
+    color: #0affea;
+    border: 1px solid #0affea;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Courier New', monospace;
+  }
+  
+  #difficulty button.selected {
+    background: rgba(255, 0, 255, 0.3);
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+    border-color: #ff00ff;
+  }
+  
+  #gameOver {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    display: none;
+  }
+  
+  #noLetters {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    display: none;
+  }
+  
+  #gameOverContent {
+    background: rgba(10, 5, 30, 0.95);
+    padding: 40px;
+    border-radius: 15px;
+    border: 2px solid #ff00ff;
+    box-shadow: 0 0 30px rgba(255, 0, 255, 0.7);
+    text-align: center;
+    max-width: 500px;
+    width: 80%;
+    backdrop-filter: blur(5px);
+    /* 添加霓虹边框效果 */
+    outline: 1px solid #ff00ff;
+    outline-offset: 5px;
+  }
+  
+  #gameOverContent h2 {
+    color: #ff5252;
+    font-size: 36px;
+    margin-top: 0;
+    text-shadow: 0 0 10px rgba(255, 82, 82, 0.7);
+  }
+  
+  #gameOverContent p {
+    font-size: 20px;
+    margin: 15px 0;
+    color: #0affea;
+  }
+  
+  #restartButton {
+    margin-top: 30px;
+    padding: 15px 40px;
+    font-size: 20px;
+    background: linear-gradient(45deg, #ff00ff, #0affea);
+    color: #000;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(10, 255, 234, 0.7);
+    font-family: 'Courier New', monospace;
+    /* 添加脉冲动画 */
+    animation: pulse 2s infinite;
+  }
+  
+  #restartButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(255, 0, 255, 0.9);
+    background: linear-gradient(45deg, #0affea, #ff00ff);
+  }
+  
+  #restartButtonNoLetters {
+    margin-top: 30px;
+    padding: 15px 40px;
+    font-size: 20px;
+    background: linear-gradient(45deg, #ff00ff, #0affea);
+    color: #000;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(10, 255, 234, 0.7);
+    font-family: 'Courier New', monospace;
+    /* 添加脉冲动画 */
+    animation: pulse 2s infinite;
+  }
+  
+  #restartButtonNoLetters:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(255, 0, 255, 0.9);
+    background: linear-gradient(45deg, #0affea, #ff00ff);
+  }
+
+  /* 新增角度显示样式 */
+  #angleDisplay {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    background: rgba(10, 5, 30, 0.7);
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid #0affea;
+    box-shadow: 0 0 15px rgba(10, 255, 234, 0.5);
+    text-align: center;
+    font-size: 20px;
+    color: #0affea;
+    font-weight: bold;
+    display: none; /* 初始隐藏 */
+    font-family: 'Courier New', monospace;
+    /* 添加霓虹边框效果 */
+    outline: 1px solid #0affea;
+    outline-offset: 2px;
+  }
+  
+  #levelIndicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    font-size: 24px;
+    color: #ff00ff;
+    font-weight: bold;
+    text-shadow: 0 0 10px #ff00ff;
+  }
+  
+  #movementChallenge {
+    color: #ff00ff;
+    font-weight: bold;
+    text-shadow: 0 0 5px #ff00ff;
+  }
+  
+  /* 扫描线效果 */
+  #scanline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    background: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    z-index: 100;
+    animation: scan 4s linear infinite;
+    /* 增强扫描线效果 */
+    background: linear-gradient(to bottom, 
+      rgba(0, 255, 255, 0) 0%, 
+      rgba(0, 255, 255, 0.3) 50%, 
+      rgba(0, 255, 255, 0) 100%);
+  }
+  
+  @keyframes scan {
+    0% {
+      top: 0;
+    }
+    100% {
+      top: 100%;
+    }
+  }
+  
+  /* 网格背景 */
+  #grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 30px 30px;
+    z-index: -1;
+    pointer-events: none;
+    /* 添加动态效果 */
+    animation: gridMove 20s linear infinite;
+  }
+  
+  /* 星空背景 */
+  #stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+  }
+  
+  .star {
+    position: absolute;
+    background-color: #0affea;
+    border-radius: 50%;
+    animation: twinkle var(--duration, 3s) infinite ease-in-out;
+  }
+  
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
+  }
+  
+  /* 脉冲动画 */
+  @keyframes pulse {
+    0% { box-shadow: 0 0 15px rgba(10, 255, 234, 0.7); }
+    50% { box-shadow: 0 0 25px rgba(255, 0, 255, 0.9); }
+    100% { box-shadow: 0 0 15px rgba(10, 255, 234, 0.7); }
+  }
+  
+  /* 网格移动动画 */
+  @keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(30px, 30px); }
+  }
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+  <div id="stars"></div>
+  <div id="grid"></div>
+  <div id="scanline"></div>
+  <canvas id="gameCanvas"></canvas>
+  <div id="ui">
+    QWEN MISSILES: <span id="lives">Q W E N</span>
+  </div>
+  <div id="levelIndicator">关卡: 1</div>
+  <div id="instructions">
+    <h2>行星毁灭者 - 关卡 <span id="currentLevel">1</span></h2>
+    <p style="font-size: 18px; color: #81d4fa;">行星纪元50年</p>
+    <p>指挥官，您驾驶着Qwen号飞船，装配着能够将行星炸毁的Qwen核弹。</p>
+    <p>您的任务是进入浩瀚的宇宙，寻找并摧毁所有对地球产生撞击威胁的目标行星！</p>
+    <br>
+    <p>点击鼠标发射单个导弹，利用行星引力引导导弹轨迹。</p>
+    <p>您拥有 Q、W、E、N 四枚特殊导弹，按顺序使用。</p>
+    <p>警告：每枚导弹若未击中目标行星，将消耗对应字母！</p>
+    <p>当前关卡目标：击毁 <span id="targetPlanets">2</span> 个目标行星</p>
+    <p>行星数量：<span id="totalPlanets">5</span> 个</p>
+    <p>引力强度：<span id="gravityStrength">基于行星质量</span></p>
+    <p id="movementChallenge" style="display: none; color: #ff00ff; font-weight: bold;">特殊挑战：飞船正在上下移动！</p>
+    
+    <button onclick="startGame()">开始任务</button>
+  </div>
+  <div id="gameOver">
+    <div id="gameOverContent">
+      <h2>任务失败</h2>
+      <p>QWEN导弹已耗尽，行星毁灭者任务终止。</p>
+      <p>您未能完成摧毁所有目标行星的任务。</p>
+      <button id="restartButton">重新开始</button>
+    </div>
+  </div>
+  
+  <div id="noLetters">
+    <div id="gameOverContent">
+      <h2>导弹耗尽</h2>
+      <p>所有QWEN导弹均已使用完毕！</p>
+      <p>您未能完成摧毁所有目标行星的任务。</p>
+      <button id="restartButtonNoLetters">重新开始</button>
+    </div>
+  </div>
+  
+  <!-- 新增角度显示 -->
+  <div id="angleDisplay">发射角度: 0°</div>
+</div>
+
+<script>
+  // 游戏画布和上下文
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // 设置画布大小
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  // 游戏状态
+  let gameRunning = false;
+  let letters = ['Q', 'W', 'E', 'N']; // 生命字母
+  let missiles = []; // 存储已发射的导弹
+  let currentLetterIndex = 0; // 当前要发射的字母索引
+  let difficulty = 'easy'; // 默认难度
+  let level = 1; // 关卡数
+
+  // 关卡设置 (移除了关卡基础引力设置，因为引力现在基于行星质量)
+  const levelSettings = {
+    1: { planets: 5, targetPlanets: 2 },
+    2: { planets: 6, targetPlanets: 3 },
+    3: { planets: 7, targetPlanets: 4 },
+    4: { planets: 10, targetPlanets: 4 }, // 增加更多行星
+    5: { planets: 10, targetPlanets: 4 }
+  };
+
+  // 导弹类
+  class Missile {
+    constructor(x, y, vx, vy, letter) {
+      this.x = x;
+      this.y = y;
+      this.vx = vx;
+      this.vy = vy;
+      this.letter = letter;
+      this.trail = [];
+      this.active = true; // 导弹是否还在飞行中
+      this.hasHitTarget = false; // 是否击中过目标行星
+      this.wentOffScreen = false; // 是否飞出屏幕
+      // 添加粒子效果
+      this.particles = [];
+      for (let i = 0; i < 5; i++) {
+        this.particles.push({
+          x: 0,
+          y: 0,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2,
+          life: 1.0,
+          size: Math.random() * 2 + 1
+        });
+      }
+    }
+
+    // 更新导弹位置
+    update() {
+      // 保存轨迹点
+      this.trail.push({x: this.x, y: this.y});
+      // 限制轨迹点数量，避免过多内存消耗
+      if (this.trail.length > 100) {
+        this.trail.shift();
+      }
+
+      // 更新位置
+      this.x += this.vx;
+      this.y += this.vy;
+
+      // 更新粒子
+      for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        p.x += this.vx + p.vx;
+        p.y += this.vy + p.vy;
+        p.life -= 0.05;
+        
+        if (p.life <= 0) {
+          p.life = 1.0;
+          p.x = 0;
+          p.y = 0;
+          p.vx = (Math.random() - 0.5) * 2;
+          p.vy = (Math.random() - 0.5) * 2;
+        }
+      }
+
+      // 边界检查 - 导弹飞出边界则标记为不活跃
+      if (this.x < -100 || this.x > canvas.width + 100 || 
+          this.y < -100 || this.y > canvas.height + 100) {
+        this.active = false;
+        this.wentOffScreen = true;
+      }
+    }
+
+    // 绘制导弹
+    draw() {
+      // 绘制轨迹
+      if (this.trail.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(this.trail[0].x, this.trail[0].y);
+        for (let i = 1; i < this.trail.length; i++) {
+          ctx.lineTo(this.trail[i].x, this.trail[i].y);
+        }
+        ctx.strokeStyle = 'rgba(10, 255, 234, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // 绘制导弹主体
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      
+      // 计算旋转角度
+      const angle = Math.atan2(this.vy, this.vx);
+      ctx.rotate(angle);
+      
+      // 绘制粒子效果
+      for (const p of this.particles) {
+        ctx.beginPath();
+        ctx.arc(p.x - 10, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(10, 255, 234, ${p.life})`;
+        ctx.fill();
+      }
+      
+      // 绘制导弹身体
+      const bodyGradient = ctx.createLinearGradient(15, 0, -8, 0);
+      bodyGradient.addColorStop(0, '#ff00ff');
+      bodyGradient.addColorStop(1, '#81d4fa');
+      ctx.fillStyle = bodyGradient;
+      ctx.beginPath();
+      ctx.moveTo(15, 0);
+      ctx.lineTo(-8, -5);
+      ctx.lineTo(-8, 5);
+      ctx.closePath();
+      ctx.fill();
+      
+      // 绘制导弹尾焰
+      const gradient = ctx.createLinearGradient(-15, 0, -8, 0);
+      gradient.addColorStop(0, '#0affea');
+      gradient.addColorStop(1, 'rgba(10, 255, 234, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.moveTo(-8, -4);
+      ctx.lineTo(-15, 0);
+      ctx.lineTo(-8, 4);
+      ctx.closePath();
+      ctx.fill();
+      
+      // 绘制字母
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 16px Courier New';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.letter, 0, -15);
+      
+      ctx.restore();
+    }
+  }
+
+  // 飞船类
+  class Spaceship {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.velocityY = 0; // 垂直速度
+      this.amplitude = 0; // 上下移动幅度
+      // 添加引擎粒子效果
+      this.engineParticles = [];
+      for (let i = 0; i < 20; i++) {
+        this.engineParticles.push({
+          x: -35,
+          y: 0,
+          vx: -Math.random() * 5 - 2,
+          vy: (Math.random() - 0.5) * 3,
+          life: Math.random(),
+          size: Math.random() * 2 + 1
+        });
+      }
+    }
+    
+    // 设置移动幅度
+    setMovement(level) {
+      // 只在第五关启用飞船上下移动
+      this.amplitude = level >= 5 ? 3 : 0; // 增加移动幅度
+    }
+    
+    // 更新飞船位置
+    update() {
+      if (this.amplitude > 0) {
+        // 更新垂直位置 - 上下移动
+        this.velocityY += 0.05; // 角速度
+        this.y += Math.sin(this.velocityY) * this.amplitude;
+        
+        // 保持飞船在画布范围内
+        this.y = Math.max(30, Math.min(canvas.height - 30, this.y));
+      }
+      
+      // 更新引擎粒子
+      for (const p of this.engineParticles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.02;
+        
+        if (p.life <= 0) {
+          p.x = -35;
+          p.y = (Math.random() - 0.5) * 10;
+          p.vx = -Math.random() * 5 - 2;
+          p.vy = (Math.random() - 0.5) * 3;
+          p.life = 1.0;
+        }
+      }
+    }
+
+    // 绘制飞船
+    draw() {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      
+      // 绘制引擎粒子
+      for (const p of this.engineParticles) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        const color = p.life > 0.5 ? 
+          `rgba(10, 255, 234, ${p.life})` : 
+          `rgba(255, 0, 255, ${p.life})`;
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+      
+      // 飞船主体渐变
+      const bodyGradient = ctx.createLinearGradient(-30, -15, 30, 15);
+      bodyGradient.addColorStop(0, '#0affea');
+      bodyGradient.addColorStop(1, '#ff00ff');
+      
+      // 绘制飞船主体
+      ctx.fillStyle = bodyGradient;
+      ctx.beginPath();
+      ctx.moveTo(35, 0);
+      ctx.lineTo(-25, -15);
+      ctx.lineTo(-20, -8);
+      ctx.lineTo(-30, 0);
+      ctx.lineTo(-20, 8);
+      ctx.lineTo(-25, 15);
+      ctx.closePath();
+      ctx.fill();
+      
+      // 添加飞船高光效果
+      const highlightGradient = ctx.createLinearGradient(0, -10, 0, 10);
+      highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+      highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = highlightGradient;
+      ctx.beginPath();
+      ctx.moveTo(25, 0);
+      ctx.lineTo(-15, -10);
+      ctx.lineTo(-10, -5);
+      ctx.lineTo(-20, 0);
+      ctx.lineTo(-10, 5);
+      ctx.lineTo(-15, 10);
+      ctx.closePath();
+      ctx.fill();
+      
+      // 绘制飞船驾驶舱
+      const cockpitGradient = ctx.createRadialGradient(10, 0, 0, 10, 0, 10);
+      cockpitGradient.addColorStop(0, '#000');
+      cockpitGradient.addColorStop(1, 'rgba(10, 255, 234, 0.3)');
+      ctx.fillStyle = cockpitGradient;
+      ctx.beginPath();
+      ctx.arc(10, 0, 10, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // 绘制飞船翼
+      const wingGradient = ctx.createLinearGradient(-12, -22, 8, -22);
+      wingGradient.addColorStop(0, '#ff00ff');
+      wingGradient.addColorStop(1, '#81d4fa');
+      ctx.fillStyle = wingGradient;
+      ctx.beginPath();
+      ctx.moveTo(-12, -22);
+      ctx.lineTo(8, -22);
+      ctx.lineTo(2, -12);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(-12, 22);
+      ctx.lineTo(8, 22);
+      ctx.lineTo(2, 12);
+      ctx.closePath();
+      ctx.fill();
+      
+      // 绘制引擎
+      const engineGradient = ctx.createLinearGradient(-30, -8, -30, 8);
+      engineGradient.addColorStop(0, '#ff00ff');
+      engineGradient.addColorStop(1, '#0affea');
+      ctx.fillStyle = engineGradient;
+      ctx.fillRect(-35, -8, 10, 16);
+      
+      // 绘制引擎尾焰
+      const engineFlameGradient = ctx.createLinearGradient(-45, -7, -35, 7);
+      engineFlameGradient.addColorStop(0, '#0affea');
+      engineFlameGradient.addColorStop(1, 'rgba(10, 255, 234, 0)');
+      ctx.fillStyle = engineFlameGradient;
+      ctx.beginPath();
+      ctx.moveTo(-35, -7);
+      ctx.lineTo(-45, 0);
+      ctx.lineTo(-35, 7);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.restore();
+    }
+  }
+
+  // 行星类
+  class Planet {
+    constructor(x, y, radius, mass, type, isTarget = false) {
+      this.x = x;
+      this.y = y;
+      this.radius = radius;
+      this.mass = mass;
+      this.type = type; // 行星类型：rocky, gas, ice
+      this.isTarget = isTarget;
+      this.destroyed = false;
+      
+      // 根据类型设置颜色
+      switch(type) {
+        case 'rocky':
+          this.color = '#8d6e63'; // 岳石行星 - 棕色
+          this.surfaceColor = '#5d4037';
+          break;
+        case 'gas':
+          this.color = '#4fc3f7'; // 气态行星 - 蓝色
+          this.surfaceColor = '#0288d1';
+          break;
+        case 'ice':
+          this.color = '#b3e5fc'; // 冰行星 - 浅蓝色
+          this.surfaceColor = '#81d4fa';
+          break;
+        default:
+          this.color = '#8d6e63';
+          this.surfaceColor = '#5d4037';
+      }
+    }
+
+    // 绘制行星
+    draw() {
+      if (this.destroyed) return;
+
+      // 行星光晕效果
+      if (this.isTarget) {
+        const haloGradient = ctx.createRadialGradient(
+          this.x, this.y, this.radius,
+          this.x, this.y, this.radius + 15
+        );
+        haloGradient.addColorStop(0, 'rgba(255, 0, 255, 0.5)');
+        haloGradient.addColorStop(1, 'rgba(255, 0, 255, 0)');
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius + 15, 0, Math.PI * 2);
+        ctx.fillStyle = haloGradient;
+        ctx.fill();
+      }
+
+      // 行星主体
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      
+      // 创建更复杂的径向渐变
+      const gradient = ctx.createRadialGradient(
+        this.x - this.radius/3, this.y - this.radius/3, 1,
+        this.x, this.y, this.radius
+      );
+      gradient.addColorStop(0, '#ffffff');
+      gradient.addColorStop(0.2, this.color);
+      gradient.addColorStop(1, this.surfaceColor);
+      
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // 添加行星高光效果
+      const highlightGradient = ctx.createRadialGradient(
+        this.x - this.radius/2, this.y - this.radius/2, 1,
+        this.x - this.radius/2, this.y - this.radius/2, this.radius/3
+      );
+      highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+      highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.beginPath();
+      ctx.arc(this.x - this.radius/2, this.y - this.radius/2, this.radius/3, 0, Math.PI * 2);
+      ctx.fillStyle = highlightGradient;
+      ctx.fill();
+
+      // 根据行星类型绘制不同的表面特征
+      switch(this.type) {
+        case 'rocky':
+          // 岩石纹理
+          ctx.beginPath();
+          ctx.arc(this.x - this.radius/2, this.y - this.radius/3, this.radius/4, 0, Math.PI * 2);
+          ctx.fillStyle = this.surfaceColor;
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(this.x + this.radius/3, this.y + this.radius/4, this.radius/5, 0, Math.PI * 2);
+          ctx.fillStyle = this.surfaceColor;
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(this.x - this.radius/4, this.y + this.radius/2, this.radius/6, 0, Math.PI * 2);
+          ctx.fillStyle = this.surfaceColor;
+          ctx.fill();
+          
+          // 添加陨石坑效果
+          ctx.beginPath();
+          ctx.arc(this.x + this.radius/2, this.y - this.radius/3, this.radius/8, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          ctx.fill();
+          break;
+        case 'gas':
+          // 气态条纹
+          for (let i = 0; i < 5; i++) {
+            const stripeY = this.y - this.radius + (i * this.radius * 0.4);
+            ctx.beginPath();
+            ctx.ellipse(this.x, stripeY, this.radius * 0.9, this.radius * 0.1, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(2, 119, 189, 0.3)';
+            ctx.fill();
+          }
+          
+          // 添加气旋效果
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius * 0.3, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+          ctx.fill();
+          break;
+        case 'ice':
+          // 冰晶纹理
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius * 0.8, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(179, 229, 252, 0.5)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(this.x - this.radius * 0.6, this.y);
+          ctx.lineTo(this.x + this.radius * 0.6, this.y);
+          ctx.moveTo(this.x, this.y - this.radius * 0.6);
+          ctx.lineTo(this.x, this.y + this.radius * 0.6);
+          ctx.strokeStyle = 'rgba(129, 212, 250, 0.7)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          
+          // 添加冰晶高光
+          ctx.beginPath();
+          ctx.moveTo(this.x - this.radius * 0.4, this.y - this.radius * 0.4);
+          ctx.lineTo(this.x + this.radius * 0.4, this.y + this.radius * 0.4);
+          ctx.moveTo(this.x - this.radius * 0.4, this.y + this.radius * 0.4);
+          ctx.lineTo(this.x + this.radius * 0.4, this.y - this.radius * 0.4);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          break;
+      }
+
+      // 如果是目标行星，绘制红色标记
+      if (this.isTarget) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff00ff';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // 绘制目标标记
+        ctx.beginPath();
+        ctx.moveTo(this.x - this.radius - 15, this.y);
+        ctx.lineTo(this.x - this.radius - 5, this.y);
+        ctx.moveTo(this.x + this.radius + 5, this.y);
+        ctx.lineTo(this.x + this.radius + 15, this.y);
+        ctx.moveTo(this.x, this.y - this.radius - 15);
+        ctx.lineTo(this.x, this.y - this.radius - 5);
+        ctx.moveTo(this.x, this.y + this.radius + 5);
+        ctx.lineTo(this.x, this.y + this.radius + 15);
+        ctx.strokeStyle = '#ff00ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // 添加脉冲动画效果
+        const pulseRadius = this.radius + 10 + Math.sin(Date.now() / 200) * 3;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, pulseRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 0, 255, 0.7)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // 爆炸效果类
+  class Explosion {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.radius = 5;
+      this.maxRadius = 30;
+      this.active = true;
+      // 添加粒子效果
+      this.particles = [];
+      for (let i = 0; i < 10; i++) {
+        this.particles.push({
+          x: this.x,
+          y: this.y,
+          vx: (Math.random() - 0.5) * 10,
+          vy: (Math.random() - 0.5) * 10,
+          radius: Math.random() * 3 + 1,
+          life: 1.0
+        });
+      }
+    }
+
+    update() {
+      this.radius += 1.5;
+      if (this.radius > this.maxRadius) {
+        this.active = false;
+      }
+      
+      // 更新粒子
+      for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.02;
+        
+        if (p.life <= 0) {
+          this.particles.splice(i, 1);
+        }
+      }
+    }
+
+    draw() {
+      // 绘制主爆炸
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      const gradient = ctx.createRadialGradient(
+        this.x, this.y, 0,
+        this.x, this.y, this.radius
+      );
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      gradient.addColorStop(0.5, 'rgba(255, 0, 255, 0.8)');
+      gradient.addColorStop(1, 'rgba(10, 255, 234, 0)');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      // 绘制粒子
+      for (const p of this.particles) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 0, 255, ${p.life})`;
+        ctx.fill();
+      }
+    }
+  }
+
+  // 游戏对象
+  let planets = [];
+  let explosions = []; // 存储爆炸效果
+  let spaceship;
+  const spaceshipPos = {x: 0, y: 0}; // 飞船位置
+
+  // 新增：角度显示相关
+  const angleDisplay = document.getElementById('angleDisplay');
+  let lastTrail = []; // 存储上一条导弹的轨迹
+
+  // 星星数据数组
+  let starsArray = [];
+
+  // 初始化游戏
+  function initGame() {
+    console.log("初始化游戏，关卡: " + level);
+    // 设置飞船位置为画布中心左侧
+    spaceshipPos.x = 70;
+    spaceshipPos.y = canvas.height / 2;
+    
+    // 创建飞船对象
+    spaceship = new Spaceship(spaceshipPos.x, spaceshipPos.y);
+    // 设置飞船移动
+    spaceship.setMovement(level);
+
+    // 清空导弹和爆炸数组
+    missiles = [];
+    explosions = [];
+    
+    // 重置字母索引
+    currentLetterIndex = 0;
+
+    // 初始化生命字母
+    letters = ['Q', 'W', 'E', 'N'];
+
+    // 创建行星
+    planets = [];
+    
+    // 获取当前关卡设置
+    const settings = levelSettings[level] || levelSettings[1];
+    
+    // 行星类型数组
+    const planetTypes = ['rocky', 'gas', 'ice'];
+    
+    // 添加一些随机行星
+    for (let i = 0; i < settings.planets; i++) {
+      // 确保行星不会生成在飞船位置附近
+      let x, y;
+      do {
+        x = 150 + Math.random() * (canvas.width - 250);
+        y = 50 + Math.random() * (canvas.height - 100);
+      } while (
+        Math.abs(x - spaceshipPos.x) < 120 && 
+        Math.abs(y - spaceshipPos.y) < 120
+      );
+      
+      const radius = 20 + Math.random() * 30;
+      // 质量现在直接与半径的平方成正比 (模拟体积)
+      const mass = Math.PI * radius * radius * 5; // 5 是密度系数，可以调整
+      const type = planetTypes[Math.floor(Math.random() * planetTypes.length)];
+      planets.push(new Planet(x, y, radius, mass, type));
+    }
+
+    // 添加目标行星
+    for (let i = 0; i < settings.targetPlanets; i++) {
+      let x, y;
+      let overlapping = true;
+      // 确保目标行星不重叠且远离飞船
+      while (overlapping) {
+        x = 250 + Math.random() * (canvas.width - 400);
+        y = 100 + Math.random() * (canvas.height - 200);
+        
+        // 检查是否远离飞船
+        const startDist = Math.sqrt(
+          Math.pow(x - spaceshipPos.x, 2) + 
+          Math.pow(y - spaceshipPos.y, 2)
+        );
+        
+        if (startDist < 200) {
+          continue;
+        }
+        
+        overlapping = false;
+        
+        // 检查是否与其他行星重叠
+        for (const planet of planets) {
+          const dx = x - planet.x;
+          const dy = y - planet.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // 检查重叠 (留一些安全距离)
+          if (distance < planet.radius + 30) {
+            overlapping = true;
+            break;
+          }
+        }
+      }
+      
+      // 随机选择一个非目标行星并将其设置为目标行星
+      if (planets.length > 0) {
+        const randomIndex = Math.floor(Math.random() * planets.length);
+        planets[randomIndex].isTarget = true;
+      }
+    }
+
+    // 更新UI
+    updateUI();
+  }
+
+  // 更新UI
+  function updateUI() {
+    // 更新生命字母显示
+    const livesElement = document.getElementById('lives');
+    if (livesElement) {
+      livesElement.textContent = letters.join(' ');
+    }
+    
+    // 显示当前关卡
+    const levelIndicator = document.getElementById('levelIndicator');
+    if (levelIndicator) {
+      levelIndicator.textContent = `关卡: ${level}`;
+    }
+    
+    // 更新关卡信息
+    const currentLevelElement = document.getElementById('currentLevel');
+    if (currentLevelElement) {
+      currentLevelElement.textContent = level;
+    }
+    
+    const settings = levelSettings[level] || levelSettings[1];
+    
+    const targetPlanetsElement = document.getElementById('targetPlanets');
+    if (targetPlanetsElement) {
+      targetPlanetsElement.textContent = settings.targetPlanets;
+    }
+    
+    const totalPlanetsElement = document.getElementById('totalPlanets');
+    if (totalPlanetsElement) {
+      totalPlanetsElement.textContent = settings.planets;
+    }
+    
+    // 引力强度显示移除或设为固定值，因为引力现在基于行星个体
+    const gravityStrengthElement = document.getElementById('gravityStrength');
+    if (gravityStrengthElement) {
+      gravityStrengthElement.textContent = "基于行星质量";
+    }
+    
+    // 显示或隐藏移动挑战信息
+    const movementChallenge = document.getElementById('movementChallenge');
+    if (movementChallenge) {
+      movementChallenge.style.display = level >= 5 ? 'block' : 'none';
+    }
+  }
+
+  // 检查碰撞
+  function checkCollisions() {
+    for (let i = missiles.length - 1; i >= 0; i--) {
+      const missile = missiles[i];
+
+      // 检查导弹是否处于活跃状态
+      if (missile.active) {
+        let missileHitPlanet = false;
+
+        // 检查导弹与行星的碰撞
+        for (const planet of planets) {
+          if (planet.destroyed) continue;
+          
+          const dx = missile.x - planet.x;
+          const dy = missile.y - planet.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 4 + planet.radius) { // 导弹半径近似为4
+            missileHitPlanet = true;
+            
+            // 创建爆炸效果
+            explosions.push(new Explosion(missile.x, missile.y));
+            
+            // 碰撞处理
+            if (planet.isTarget) {
+              // 击中目标行星
+              planet.destroyed = true;
+              missile.hasHitTarget = true;
+              
+              // 检查是否胜利
+              const targetPlanets = planets.filter(p => p.isTarget);
+              const remainingTargets = targetPlanets.filter(p => !p.destroyed);
+              if (remainingTargets.length === 0) {
+                updateUI();
+                setTimeout(() => endGame(true), 100);
+                return;
+              }
+            }
+            
+            // 无论击中什么行星，导弹都被销毁
+            missile.active = false;
+            break;
+          }
+        }
+      }
+
+      // 检查导弹是否不活跃（飞出边界或撞击行星）
+      if (!missile.active) {
+        // 保存轨迹
+        lastTrail = [...missile.trail];
+        
+        // 消耗字母 - 总是消耗一个字母，不管是否击中目标
+        if (letters.length > 0) {
+          letters.shift(); // 移除第一个字母
+          // 更新索引
+          currentLetterIndex = Math.max(0, currentLetterIndex - 1);
+          updateUI();
+          
+          // 检查是否失败
+          if (letters.length === 0) {
+            // 使用 setTimeout 延迟结束游戏，确保 UI 更新完成
+            setTimeout(() => endGameNoLetters(), 100);
+            return;
+          }
+        }
+        
+        // 移除不活跃的导弹
+        missiles.splice(i, 1);
+      }
+    }
+  }
+
+  // 应用引力
+  function applyGravity() {
+    for (const missile of missiles) {
+      if (!missile.active) continue;
+
+      for (const planet of planets) {
+        if (planet.destroyed) continue;
+        
+        // 计算引力方向和大小
+        const dx = planet.x - missile.x;
+        const dy = planet.y - missile.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // 避免除零错误和过近的引力
+        if (distance > 5) {
+          // 引力公式: F = G * (m1 * m2) / r^2
+          // G 是一个基础引力常数
+          const G = 0.5; // 可以调整这个值来改变整体引力强度
+          // 引力与行星质量成正比
+          const force = G * planet.mass / (distance * distance);
+          
+          // 计算引力在x和y方向的分量
+          const forceX = force * dx / distance;
+          const forceY = force * dy / distance;
+          
+          // 更新导弹速度
+          missile.vx += forceX;
+          missile.vy += forceY;
+        }
+      }
+    }
+  }
+
+  // 更新爆炸效果
+  function updateExplosions() {
+    for (let i = explosions.length - 1; i >= 0; i--) {
+      explosions[i].update();
+      if (!explosions[i].active) {
+        explosions.splice(i, 1);
+      }
+    }
+  }
+
+  // 游戏主循环
+  function gameLoop() {
+    if (!gameRunning) return;
+
+    // 清空画布
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制星空背景
+    drawStars();
+
+    // 更新飞船位置
+    if (spaceship) {
+        spaceship.update();
+    }
+
+    // 应用引力
+    applyGravity();
+
+    // 更新所有导弹位置
+    for (const missile of missiles) {
+      missile.update();
+    }
+
+    // 更新爆炸效果
+    updateExplosions();
+
+    // 检查碰撞
+    checkCollisions();
+
+    // 绘制行星
+    for (const planet of planets) {
+      planet.draw();
+    }
+
+    // 绘制所有导弹
+    for (const missile of missiles) {
+      missile.draw();
+    }
+    
+    // 绘制上一条导弹的轨迹
+    drawLastTrail();
+
+    // 绘制爆炸效果
+    for (const explosion of explosions) {
+      explosion.draw();
+    }
+
+    // 绘制飞船
+    if (spaceship) {
+        spaceship.draw();
+    }
+
+    // 只有在游戏仍在运行时才继续循环
+    if (gameRunning) {
+      requestAnimationFrame(gameLoop);
+    }
+  }
+  
+  // 新增：绘制上一条导弹的轨迹
+  function drawLastTrail() {
+    if (lastTrail.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(lastTrail[0].x, lastTrail[0].y);
+      for (let i = 1; i < lastTrail.length; i++) {
+        ctx.lineTo(lastTrail[i].x, lastTrail[i].y);
+      }
+      ctx.strokeStyle = 'rgba(255, 0, 255, 0.7)'; // 洋红色，半透明
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]); // 虚线
+      ctx.stroke();
+      ctx.setLineDash([]); // 重置为实线
+    }
+  }
+
+  // 创建星空背景数据
+  function createStars() {
+    // 初始化星星数组
+    starsArray = [];
+    for (let i = 0; i < 200; i++) {
+      starsArray.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 1.5,
+        opacity: Math.random() * 0.5 + 0.5
+      });
+    }
+    
+    // 清空现有的星星 DOM 元素
+    const starsContainer = document.getElementById('stars');
+    if (starsContainer) {
+        starsContainer.innerHTML = '';
+    }
+    
+    // 创建星星 DOM 元素 (这部分代码保持不变，用于CSS动画的星星)
+    for (let i = 0; i < 200; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      star.style.width = `${Math.random() * 3 + 1}px`;
+      star.style.height = star.style.width;
+      star.style.setProperty('--duration', `${Math.random() * 3 + 2}s`);
+      star.style.opacity = Math.random() * 0.5 + 0.5;
+      
+      // 随机选择颜色
+      const colors = ['#0affea', '#ff00ff', '#81d4fa'];
+      star.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      
+      if (starsContainer) {
+          starsContainer.appendChild(star);
+      }
+    }
+  }
+
+  // 绘制星空背景 (使用 Canvas API)
+  function drawStars() {
+    // 确保 starsArray 是数组且可迭代
+    if (!Array.isArray(starsArray)) {
+        console.error("starsArray is not an array:", starsArray);
+        return; // 避免错误
+    }
+    
+    // 绘制星星
+    for (const star of starsArray) {
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(10, 255, 234, ${star.opacity})`;
+      ctx.fill();
+    }
+  }
+
+  // 重置游戏关卡
+  function resetLevel() {
+    level = 1;
+  }
+
+  // 开始游戏
+  function startGame() {
+    console.log("开始游戏");
+    document.getElementById('instructions').style.display = 'none';
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('noLetters').style.display = 'none';
+    // 显示角度显示
+    if (angleDisplay) {
+        angleDisplay.style.display = 'block';
+    }
+    gameRunning = true;
+    level = 1; // 重置关卡
+    lastTrail = []; // 清空上一条轨迹
+    
+    // 创建星空背景数据和DOM元素
+    createStars(); 
+    
+    initGame();
+    gameLoop();
+  }
+
+  // 结束游戏
+  function endGame(isWin) {
+    gameRunning = false;
+    // 隐藏角度显示
+    if (angleDisplay) {
+        angleDisplay.style.display = 'none';
+    }
+    
+    if (isWin) {
+      console.log("游戏胜利，当前关卡: " + level);
+      // 显示结果
+      const instructions = document.getElementById('instructions');
+      // 确保每次都创建新的按钮元素
+      instructions.innerHTML = `
+        <h2>任务完成！</h2>
+        <p>恭喜指挥官，您成功摧毁了所有目标行星！</p>
+        <p>当前关卡: ${level}</p>
+        <p>目标击毁: ${levelSettings[level] ? levelSettings[level].targetPlanets : 2}个行星</p>
+        ${level < 5 ? `<p>即将进入第 ${level + 1} 关</p>` : '<p>恭喜完成所有关卡！</p>'}
+      `;
+      
+      // 创建并添加按钮
+      const button = document.createElement('button');
+      button.textContent = '进入下一关';
+      button.onclick = startNextLevel;
+      button.style.marginTop = '20px';
+      button.style.padding = '12px 30px';
+      button.style.fontSize = '18px';
+      button.style.background = 'linear-gradient(45deg, #ff00ff, #0affea)';
+      button.style.color = '#000';
+      button.style.border = 'none';
+      button.style.borderRadius = '30px';
+      button.style.cursor = 'pointer';
+      button.style.transition = 'all 0.3s';
+      button.style.fontWeight = 'bold';
+      button.style.letterSpacing = '1px';
+      button.style.boxShadow = '0 0 15px rgba(10, 255, 234, 0.7)';
+      button.style.fontFamily = 'Courier New, monospace';
+      
+      button.onmouseenter = function() {
+        this.style.transform = 'translateY(-2px)';
+        this.style.boxShadow = '0 0 25px rgba(255, 0, 255, 0.9)';
+        this.style.background = 'linear-gradient(45deg, #0affea, #ff00ff)';
+      };
+      button.onmouseleave = function() {
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = '0 0 15px rgba(10, 255, 234, 0.7)';
+        this.style.background = 'linear-gradient(45deg, #ff00ff, #0affea)';
+      };
+      
+      instructions.appendChild(button);
+      
+      instructions.style.display = 'block';
+    } else {
+      console.log("游戏失败");
+      // 显示游戏结束画面
+      document.getElementById('gameOver').style.display = 'flex';
+    }
+  }
+  
+  // 开始下一关
+  function startNextLevel() {
+    console.log("点击进入下一关，当前关卡: " + level);
+    
+    // 增加关卡数 (最多到第5关)
+    if (level < 5) {
+        level++;
+        console.log("关卡增加到: " + level);
+    } else {
+        console.log("已经是最后一关");
+        return; // 如果已经是最后一关，则不执行任何操作
+    }
+    
+    // 隐藏所有界面元素
+    document.getElementById('instructions').style.display = 'none';
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('noLetters').style.display = 'none';
+    
+    // 停止当前游戏循环
+    gameRunning = false;
+    
+    // 使用 setTimeout 确保状态更新完成后再初始化新关卡
+    setTimeout(() => {
+        console.log("准备初始化第 " + level + " 关");
+        // 重置所有游戏状态
+        missiles = [];
+        explosions = [];
+        currentLetterIndex = 0;
+        letters = ['Q', 'W', 'E', 'N'];
+        planets = [];
+        lastTrail = []; // 清空上一条轨迹
+        
+        // 创建新的星空背景数据和DOM元素
+        createStars();
+        
+        // 初始化并开始新关卡
+        initGame();
+        
+        // 启动游戏循环
+        gameRunning = true;
+        gameLoop();
+        
+        console.log("第 " + level + " 关已启动");
+    }, 50); // 延迟50毫秒，确保DOM更新
+  }
+  
+  // 字母用完结束游戏
+  function endGameNoLetters() {
+    gameRunning = false;
+    // 隐藏角度显示
+    if (angleDisplay) {
+        angleDisplay.style.display = 'none';
+    }
+    console.log("字母用完，游戏结束");
+    // 显示字母用完画面
+    document.getElementById('noLetters').style.display = 'flex';
+  }
+
+  // 初始绑定事件
+  document.getElementById('restartButton').addEventListener('click', startGame);
+  document.getElementById('restartButtonNoLetters').addEventListener('click', startGame);
+
+  // 初始化关卡
+  level = 1;
+
+  // 鼠标移动事件，用于显示角度
+  canvas.addEventListener('mousemove', (e) => {
+    if (!gameRunning) return;
+    // 只有当没有导弹在飞行时才显示角度
+    if (missiles.length > 0) {
+      return;
+    }
+    // 检查是否还有可用字母
+    if (currentLetterIndex >= letters.length) {
+      return;
+    }
+    
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // 使用飞船当前位置作为起点，优先使用 spaceship 对象，如果未初始化则使用 spaceshipPos
+    let launchX, launchY;
+    if (spaceship) {
+        launchX = spaceship.x;
+        launchY = spaceship.y;
+    } else {
+        launchX = spaceshipPos.x;
+        launchY = spaceshipPos.y;
+    }
+    
+    // 计算角度 (弧度)
+    const dx = mouseX - launchX;
+    const dy = mouseY - launchY;
+    let angleInRadians = Math.atan2(dy, dx);
+    
+    // 转换为角度 (-180 到 180)
+    let angleInDegrees = angleInRadians * 180 / Math.PI;
+    
+    // 更新角度显示
+    if (angleDisplay) {
+        angleDisplay.textContent = `发射角度: ${Math.round(angleInDegrees)}°`;
+    }
+  });
+
+  // 鼠标点击发射导弹
+  canvas.addEventListener('click', (e) => {
+    if (!gameRunning) return;
+    
+    // 只有当没有导弹在飞行时才能发射新导弹
+    if (missiles.length > 0) {
+      return;
+    }
+    
+    // 检查是否还有可用字母
+    if (currentLetterIndex >= letters.length) {
+      return;
+    }
+    
+    // 计算鼠标位置
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // 使用飞船当前位置作为发射点，优先使用 spaceship 对象，如果未初始化则使用 spaceshipPos
+    let launchX, launchY;
+    if (spaceship) {
+        launchX = spaceship.x;
+        launchY = spaceship.y;
+    } else {
+        launchX = spaceshipPos.x;
+        launchY = spaceshipPos.y;
+    }
+    
+    // 计算发射方向向量
+    const dx = mouseX - launchX;
+    const dy = mouseY - launchY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // 标准化方向向量并设置初速度
+    if (distance > 0) {
+      const speed = 9; // 恢复并提高初速度
+      const vx = (dx / distance) * speed;
+      const vy = (dy / distance) * speed;
+      
+      // 获取当前字母
+      const letter = letters[currentLetterIndex];
+      
+      // 创建新导弹
+      const missile = new Missile(launchX, launchY, vx, vy, letter);
+      missiles.push(missile);
+      
+      // 更新字母索引
+      currentLetterIndex++;
+    }
+  });
+</script>
+
+</body>
+</html>
